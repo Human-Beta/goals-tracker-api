@@ -1,13 +1,13 @@
 openapi: 3.0.3
 info:
-  title: Goal Tracker MVP API
+  title: Goal Tracker API
   version: 0.1.0
   description: |
-    MVP API для Goal Tracker з інтеграцією Telegram через service-token модель.
+    API для Goal Tracker з інтеграцією Telegram через service-token модель.
 
     ## Auth режими
-    - **Bot service auth (MVP):** `Authorization: Bearer <BOT_SERVICE_TOKEN>` + `X-Telegram-User-Id`.
-    - **Web user auth:** відкладено після MVP.
+    - **Bot service auth:** `Authorization: Bearer <BOT_SERVICE_TOKEN>` + `X-Telegram-User-Id`.
+    - **Web user auth:** буде додано окремо.
 servers:
   - url: https://api.example.com
     description: Production (placeholder)
