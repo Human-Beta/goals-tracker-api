@@ -34,7 +34,8 @@ Deploy with `vercel deploy`.
 
 ## Docs
 
-Business/product specification: `docs/project-business-spec.md`.
+- Primary modular business spec: `docs/business-spec/README.md`
+- Legacy monolithic draft: `docs/project-business-spec.md`
 
 ## Security
 

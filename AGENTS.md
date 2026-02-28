@@ -7,6 +7,11 @@ Instructions for Codex in this repository.
 - Do not break existing API contracts or public behavior unless explicitly requested.
 - After changes, provide a short summary of what was changed, which files were touched, and how it was verified.
 
+## 1.1) Business-context loading (required)
+- Start business/domain tasks from `docs/business-spec/README.md`.
+- Read only the domain files that match the current change scope (do not load the full legacy monolith by default).
+- Use `docs/project-business-spec.md` only as a fallback reference.
+
 ## 2) Checks before each commit (required)
 Before **every** commit creation, run the commands that match GitHub Actions (`.github/workflows/ci.yml`):
 

@@ -1,3 +1,6 @@
+> Legacy monolithic draft. Primary business docs now live in:
+> [docs/business-spec/README.md](./business-spec/README.md)
+
 # Goal Tracker MVP — технічна специфікація
 
 ## 1) Авторизація/сесії: Telegram бот + сайт (рекомендована схема)
