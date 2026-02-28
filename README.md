@@ -153,7 +153,7 @@ API довіряє цим даним **лише якщо валідний servic
 #### `GET /goals/{goalId}/progress?from=YYYY-MM-DD&to=YYYY-MM-DD`
 Повертає список events (для “просто історії”).
 
-#### `PATCH /progress/{eventId}` (виправити введене)
+#### `PATCH /goals/{goalId}/progress/{eventId}` (виправити введене)
 ```json
 {
   "delta_value": 15,
@@ -162,7 +162,7 @@ API довіряє цим даним **лише якщо валідний servic
 }
 ```
 
-#### `DELETE /progress/{eventId}` (видалити неправильне)
+#### `DELETE /goals/{goalId}/progress/{eventId}` (видалити неправильне)
 Це краще, ніж “undo”, бо:
 - прозора історія
 - можна правити конкретний день

@@ -1,0 +1,587 @@
+openapi: 3.0.3
+info:
+  title: Goal Tracker API
+  version: 0.1.0
+  description: |
+    API for Goal Tracker with Telegram integration using a service-token model.
+
+    ## Auth modes
+    - **Bot service auth:** `Authorization: Bearer <BOT_SERVICE_TOKEN>` + `X-Telegram-User-Id`.
+    - **Web user auth:** will be added separately.
+servers:
+  - url: https://api.example.com
+    description: Production (placeholder)
+  - url: http://localhost:8080
+    description: Local
+
+tags:
+  - name: Bot
+  - name: Goals
+  - name: Progress
+
+security:
+  - BotServiceBearer: []
+
+paths:
+  /bot/users/upsert:
+    post:
+      tags: [Bot]
+      summary: Create or update user by telegram_user_id
+      operationId: upsertBotUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BotUserUpsertRequest'
+      responses:
+        '200':
+          description: User created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BotUserUpsertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /goals:
+    post:
+      tags: [Goals]
+      summary: Create goal
+      operationId: createGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGoalRequest'
+      responses:
+        '201':
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      tags: [Goals]
+      summary: List goals (summary)
+      operationId: listGoals
+      responses:
+        '200':
+          description: Goals list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GoalListItem'
+                required: [items]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /goals/{goalId}:
+    parameters:
+      - $ref: '#/components/parameters/GoalIdPath'
+    get:
+      tags: [Goals]
+      summary: Get goal details
+      operationId: getGoalById
+      responses:
+        '200':
+          description: Goal details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Goals]
+      summary: Update goal
+      description: |
+        Allowed fields: `title`, `target_value`, `start_date`, `end_date`.
+        `unit` cannot be changed.
+      operationId: updateGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGoalRequest'
+      responses:
+        '200':
+          description: Goal updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoalDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /goals/{goalId}/progress:
+    parameters:
+      - $ref: '#/components/parameters/GoalIdPath'
+    post:
+      tags: [Progress]
+      summary: Add progress (delta)
+      operationId: createProgressEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProgressEventRequest'
+      responses:
+        '201':
+          description: Progress event created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags: [Progress]
+      summary: List progress events for goal
+      operationId: listProgressEvents
+      parameters:
+        - $ref: '#/components/parameters/FromDateQuery'
+        - $ref: '#/components/parameters/ToDateQuery'
+        - $ref: '#/components/parameters/SortQuery'
+      responses:
+        '200':
+          description: Progress events list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProgressEvent'
+                required: [items]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /goals/{goalId}/progress/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/GoalIdPath'
+      - $ref: '#/components/parameters/EventIdPath'
+    patch:
+      tags: [Progress]
+      summary: Update progress event
+      operationId: updateProgressEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressEventRequest'
+      responses:
+        '200':
+          description: Event updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+    delete:
+      tags: [Progress]
+      summary: Delete progress event
+      operationId: deleteProgressEvent
+      responses:
+        '204':
+          description: Event deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BotServiceBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: ServiceToken
+      description: Bearer token for bot-server.
+
+  parameters:
+    GoalIdPath:
+      name: goalId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EventIdPath:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FromDateQuery:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+    ToDateQuery:
+      name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+    SortQuery:
+      name: sort
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: asc
+
+  headers:
+    XTelegramUserId:
+      description: Telegram user id from bot-server.
+      schema:
+        type: integer
+        format: int64
+
+  schemas:
+    GoalUnit:
+      type: string
+      enum: [pages, minutes, km]
+
+    GoalStatus:
+      type: string
+      enum: [active, completed]
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: validation_error
+        message:
+          type: string
+          example: end_date must be after today
+      required: [code, message]
+
+    BotUserUpsertRequest:
+      type: object
+      properties:
+        telegram_user_id:
+          type: integer
+          format: int64
+          example: 123456789
+        timezone:
+          type: string
+          example: Europe/Uzhgorod
+      required: [telegram_user_id, timezone]
+
+    BotUserUpsertResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        telegram_user_id:
+          type: integer
+          format: int64
+        timezone:
+          type: string
+      required: [user_id, telegram_user_id, timezone]
+
+    CreateGoalRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        unit:
+          $ref: '#/components/schemas/GoalUnit'
+        target_value:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 464
+        start_date:
+          type: string
+          format: date
+          description: Defaults to today. Cannot be in the future.
+        end_date:
+          type: string
+          format: date
+          description: Required and must be strictly after today.
+      required: [title, unit, target_value, end_date]
+
+    UpdateGoalRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        target_value:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Cannot be decreased below current progress sum.
+        start_date:
+          type: string
+          format: date
+          description: Cannot be in the future.
+        end_date:
+          type: string
+          format: date
+          description: Must be strictly after today.
+      additionalProperties: false
+
+    GoalListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        percent_complete:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        days_left:
+          type: integer
+          minimum: 0
+        pace_current_7d:
+          type: number
+          format: double
+      required: [id, title, percent_complete, days_left, pace_current_7d]
+
+    GoalDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        unit:
+          $ref: '#/components/schemas/GoalUnit'
+        target_value:
+          type: number
+          format: double
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/GoalStatus'
+        current_value:
+          type: number
+          format: double
+        remaining_value:
+          type: number
+          format: double
+        percent_complete:
+          type: number
+          format: double
+        days_left:
+          type: integer
+        days_left_for_pace:
+          type: integer
+        days_total:
+          type: integer
+        days_elapsed:
+          type: integer
+        pace_expected_per_day:
+          type: number
+          format: double
+        pace_required_per_day:
+          type: number
+          format: double
+        pace_current_7d:
+          type: number
+          format: double
+        pace_current_30d:
+          type: number
+          format: double
+        pace_current_all:
+          type: number
+          format: double
+        eta_date:
+          type: string
+          format: date
+          nullable: true
+        expected_by_today:
+          type: number
+          format: double
+        behind_value:
+          type: number
+          format: double
+        catchup_pace_next_7_days:
+          type: number
+          format: double
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - user_id
+        - title
+        - unit
+        - target_value
+        - start_date
+        - end_date
+        - status
+        - current_value
+        - remaining_value
+        - percent_complete
+        - days_left
+        - days_left_for_pace
+        - days_total
+        - days_elapsed
+        - pace_expected_per_day
+        - pace_required_per_day
+        - pace_current_7d
+        - pace_current_30d
+        - pace_current_all
+        - expected_by_today
+        - behind_value
+        - catchup_pace_next_7_days
+        - created_at
+        - updated_at
+
+    CreateProgressEventRequest:
+      type: object
+      properties:
+        delta_value:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Progress delta > 0
+        date:
+          type: string
+          format: date
+          description: Defaults to today. Cannot be in the future.
+        note:
+          type: string
+          nullable: true
+      required: [delta_value]
+
+    UpdateProgressEventRequest:
+      type: object
+      properties:
+        delta_value:
+          type: number
+          format: double
+          minimum: 0.01
+        date:
+          type: string
+          format: date
+        note:
+          type: string
+          nullable: true
+      additionalProperties: false
+
+    ProgressEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        goal_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        delta_value:
+          type: number
+          format: double
+        note:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, goal_id, date, delta_value, created_at, updated_at]
+
+  responses:
+    BadRequest:
+      description: Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Invalid or missing service token
+      headers:
+        X-Telegram-User-Id:
+          $ref: '#/components/headers/XTelegramUserId'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Domain rule conflict (e.g., target_value < current_value)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
