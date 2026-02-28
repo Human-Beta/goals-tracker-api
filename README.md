@@ -1,21 +1,36 @@
 # Goal Tracker API
 
+## Requirements
+
+- Node.js 20+
+
 ## Run locally
 
 ```bash
 npm i
 cp .env.example .env
-vercel dev
+npm run dev:vercel
 ```
 
-## Health check
+Then open `http://localhost:3000/api/health`.
 
-Open `http://localhost:3000/api/health` after starting the dev server.
+## Scripts
 
-## Project documentation
+- `npm run dev:vercel` - run API locally via Vercel runtime
+- `npm run build` - compile TypeScript to `dist/`
+- `npm run typecheck` - run TypeScript checks without emitting files
+- `npm run lint` - run ESLint
+- `npm run format` - run Prettier
+- `npm test` - run tests
 
-Business/product specification moved to: `docs/project-business-spec.md`.
+## Deployment
 
-## Security note
+Deploy with `vercel deploy`.
+
+## Docs
+
+Business/product specification: `docs/project-business-spec.md`.
+
+## Security
 
 Never commit `.env` files or real secrets. This repository ignores `.env` by default.
