@@ -14,6 +14,11 @@ npm run dev:vercel
 
 Then open `http://localhost:3000/api/health`.
 
+API docs:
+
+- `http://localhost:3000/api/docs` - Swagger UI
+- `http://localhost:3000/api/openapi` - OpenAPI YAML
+
 ## Scripts
 
 - `npm run dev:vercel` - run API locally via Vercel runtime
