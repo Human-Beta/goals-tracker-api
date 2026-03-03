@@ -32,6 +32,8 @@ API docs:
 
 Deploy with `vercel deploy`.
 
+Set `DATABASE_URL` in Vercel project environment variables to your managed PostgreSQL connection string.
+
 ## Docs
 
 - Primary modular business spec: `docs/business-spec/README.md`

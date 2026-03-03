@@ -5,7 +5,7 @@ dotenv.config();
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  MONGODB_URI: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
   BOT_SERVICE_TOKEN: z.string().optional(),
   LOG_LEVEL: z.string().default('info'),
 });
