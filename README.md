@@ -37,6 +37,8 @@ Set `DATABASE_URL` in Vercel project environment variables to your managed Postg
 ## Docs
 
 - Primary modular business spec: `docs/business-spec/README.md`
+- Technical docs index: `docs/technical/README.md`
+- Database notes: `docs/technical/database.md`
 - Legacy monolithic draft: `docs/project-business-spec.md`
 
 ## Security

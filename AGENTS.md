@@ -16,6 +16,11 @@ Instructions for Codex in this repository.
 - Read only the domain files that match the current change scope (do not load the full legacy monolith by default).
 - Use `docs/project-business-spec.md` only as a fallback reference.
 
+## 1.2) Technical-context loading
+- For implementation/runtime/infrastructure tasks, start from `docs/technical/README.md`.
+- Keep technical implementation docs in `docs/technical/`.
+- For DB-related changes, read `docs/technical/database.md` and only then load extra files if needed.
+
 ## 2) Checks before each commit (required)
 Before **every** commit creation, run the commands that match GitHub Actions (`.github/workflows/ci.yml`):
 
