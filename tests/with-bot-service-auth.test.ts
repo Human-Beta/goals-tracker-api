@@ -4,37 +4,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { withBotServiceAuth } from '../src';
 import { env } from '../src/config/env';
+import { createMockResponse } from './helpers/mock-response';
 
 const initialBotServiceToken = env.BOT_SERVICE_TOKEN;
-
-type MockResponse = {
-  statusCode: number;
-  headers: Record<string, string>;
-  body: string;
-  setHeader: (name: string, value: string) => MockResponse;
-  end: (payload?: unknown) => MockResponse;
-};
 
 function createRequest(authorization?: string): IncomingMessage {
   return {
     headers: authorization ? { authorization } : {},
   } as IncomingMessage;
-}
-
-function createMockResponse(): MockResponse {
-  return {
-    statusCode: 0,
-    headers: {},
-    body: '',
-    setHeader(name: string, value: string) {
-      this.headers[name] = value;
-      return this;
-    },
-    end(payload?: unknown) {
-      this.body = typeof payload === 'string' ? payload : '';
-      return this;
-    },
-  };
 }
 
 describe('withBotServiceAuth', () => {
