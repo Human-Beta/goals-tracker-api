@@ -1,10 +1,10 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import healthDb from 'api/health/db';
-import { queryPostgres } from '@/db/postgres';
+import healthDb from '../api/health/db';
+import { queryPostgres } from '../src/db/postgres';
 
-vi.mock('@/db/postgres', () => ({
+vi.mock('../src/db/postgres', () => ({
   queryPostgres: vi.fn(),
 }));
 

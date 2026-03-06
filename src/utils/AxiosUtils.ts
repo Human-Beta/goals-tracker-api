@@ -1,6 +1,6 @@
 const AxiosUtils = {
   noop(): void {
-    // Placeholder utility for alias resolution scaffolding.
+    // Placeholder utility for repository scaffolding.
   },
 };
 
