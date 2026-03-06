@@ -24,9 +24,9 @@ function resolveDateParts(timezone: string, now: Date): DateParts {
   const parts = formatter.formatToParts(now);
 
   return {
-    year: parts.find((part) => part.type === 'year')?.value ?? '',
-    month: parts.find((part) => part.type === 'month')?.value ?? '',
-    day: parts.find((part) => part.type === 'day')?.value ?? '',
+    year: parts.find(part => part.type === 'year')?.value ?? '',
+    month: parts.find(part => part.type === 'month')?.value ?? '',
+    day: parts.find(part => part.type === 'day')?.value ?? '',
   };
 }
 

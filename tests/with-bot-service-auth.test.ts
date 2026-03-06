@@ -25,10 +25,7 @@ describe('withBotServiceAuth', () => {
     const wrappedHandler = withBotServiceAuth(handler);
     const res = createMockResponse();
 
-    await wrappedHandler(
-      createRequest('Bearer invalid-token'),
-      res as unknown as ServerResponse
-    );
+    await wrappedHandler(createRequest('Bearer invalid-token'), res as unknown as ServerResponse);
 
     expect(handler).not.toHaveBeenCalled();
     expect(res.statusCode).toBe(401);
