@@ -20,11 +20,7 @@ export function createErrorPayload(code: ErrorCode, message: string): ErrorPaylo
   return { code, message };
 }
 
-export function sendError(
-  res: ServerResponse,
-  statusCode: number,
-  payload: ErrorPayload
-): void {
+export function sendError(res: ServerResponse, statusCode: number, payload: ErrorPayload): void {
   res.statusCode = statusCode;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(JSON.stringify(payload));

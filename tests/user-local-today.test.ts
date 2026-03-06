@@ -11,8 +11,6 @@ describe('getUserLocalToday', () => {
   });
 
   it('throws clear error for invalid timezone', () => {
-    expect(() => getUserLocalToday('Invalid/Timezone')).toThrow(
-      'Invalid IANA timezone: Invalid/Timezone'
-    );
+    expect(() => getUserLocalToday('Invalid/Timezone')).toThrow('Invalid IANA timezone: Invalid/Timezone');
   });
 });

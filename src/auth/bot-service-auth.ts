@@ -3,9 +3,7 @@ import type { IncomingMessage } from 'node:http';
 import { env } from '../config/env';
 import { createErrorPayload, type ErrorPayload } from '../http/error';
 
-export type BotServiceAuthResult =
-  | { ok: true }
-  | { ok: false; statusCode: number; error: ErrorPayload };
+export type BotServiceAuthResult = { ok: true } | { ok: false; statusCode: number; error: ErrorPayload };
 
 export function parseBearerToken(authorization: string | string[] | undefined): string | null {
   if (!authorization) {
