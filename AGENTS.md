@@ -27,6 +27,7 @@ Before **every** commit creation, run the commands that match GitHub Actions (`.
 
 ```bash
 npm ci
+npm run format
 npm run typecheck
 npm run lint
 npm test
