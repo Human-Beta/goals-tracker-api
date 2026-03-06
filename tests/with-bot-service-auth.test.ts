@@ -2,8 +2,8 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { withBotServiceAuth } from '../src';
 import { env } from '../src/config/env';
-import { withBotServiceAuth } from '../src/http/with-bot-service-auth';
 
 const initialBotServiceToken = env.BOT_SERVICE_TOKEN;
 

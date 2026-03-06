@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AxiosUtils } from '../src/index';
+import { AxiosUtils } from '../src';
 
 describe('scaffold', () => {
   it('loads relative imports', () => {
