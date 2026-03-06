@@ -23,6 +23,7 @@ API docs:
 
 - `npm run dev:vercel` - run API locally via Vercel runtime
 - `npm run build` - compile TypeScript to `dist/`
+- `npm run build:vercel` - run production migrations on Vercel (`VERCEL_ENV=production`) and then build
 - `npm run typecheck` - run TypeScript checks without emitting files
 - `npm run lint` - run ESLint
 - `npm run format` - run Prettier
@@ -36,7 +37,12 @@ API docs:
 
 Deploy with `vercel deploy`.
 
-Set `DATABASE_URL` in Vercel project environment variables to your managed PostgreSQL connection string.
+Set environment variables in Vercel:
+
+- `DATABASE_POSTGRES_PRISMA_URL` - Prisma runtime connection string
+- `DATABASE_POSTGRES_URL_NON_POOLING` - direct database connection string for Prisma migrations
+
+`vercel.json` uses `npm run build:vercel`, which applies `prisma migrate deploy` automatically only for production deployments.
 
 ## Docs
 
