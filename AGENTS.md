@@ -5,6 +5,7 @@ Instructions for Codex in this repository.
 ## 1) General rules
 - Make only the minimum necessary changes and avoid unnecessary refactoring.
 - Do not break existing API contracts or public behavior unless explicitly requested.
+- Prefer shortened imports via `src/index.ts` (barrel exports) when available; use deep imports only when a symbol is not exported from the barrel.
 - After changes, provide a short summary of what was changed, which files were touched, and how it was verified.
 - Use `gh` for GitHub-related operations (for example, creating/viewing PRs) when `gh` is available in the environment.
 - If a PR was created as part of the task, always include a link to that PR in the final report.
