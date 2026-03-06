@@ -4,7 +4,8 @@
 
 - This project uses **PostgreSQL** as the primary database.
 - Primary DB layer: **Prisma ORM** (`prisma` + `@prisma/client`).
-- Prisma datasource connection string comes from `DATABASE_URL`.
+- Prisma datasource runtime connection string comes from `DATABASE_POSTGRES_PRISMA_URL`.
+- Prisma migration/direct connection string comes from `DATABASE_POSTGRES_URL_NON_POOLING` (via `datasource db.directUrl` in schema).
 
 ## Prisma Files
 
@@ -54,6 +55,13 @@ Available scripts:
 For CI/production, use `prisma migrate deploy`.
 For local iterative schema changes, use `prisma migrate dev`.
 
+### Vercel Deployment Flow
+
+- Vercel build command is `npm run build:vercel`.
+- `build:vercel` runs `prisma migrate deploy` only when `VERCEL_ENV=production`.
+- For preview deployments, migrations are skipped and only TypeScript build runs.
+- Set both `DATABASE_POSTGRES_PRISMA_URL` and `DATABASE_POSTGRES_URL_NON_POOLING` in Vercel project environment variables.
+
 ## Health Check
 
 - Endpoint: `/api/health/db`
@@ -72,5 +80,5 @@ For local iterative schema changes, use `prisma migrate dev`.
 
 ## Practical Notes
 
-- If `DATABASE_URL` is missing, Prisma/database operations fail at runtime.
+- If `DATABASE_POSTGRES_PRISMA_URL` or `DATABASE_POSTGRES_URL_NON_POOLING` is missing, Prisma/database operations fail at runtime.
 - Keep timezone strings as valid IANA identifiers (for example, `Europe/Uzhgorod`).

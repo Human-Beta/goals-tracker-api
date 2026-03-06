@@ -18,7 +18,7 @@ globalForPostgres.__postgresCache__ = postgresCache;
 
 function createPoolConfig(): PoolConfig {
   return {
-    connectionString: env.DATABASE_URL,
+    connectionString: env.DATABASE_POSTGRES_PRISMA_URL,
     // Best practice for most managed Postgres providers in serverless environments.
     ssl: env.NODE_ENV === 'development' ? false : { rejectUnauthorized: false },
     max: 5,
@@ -32,8 +32,8 @@ export function getPostgresPool(): Pool {
     return postgresCache.pool;
   }
 
-  if (!env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not set.');
+  if (!env.DATABASE_POSTGRES_PRISMA_URL) {
+    throw new Error('DATABASE_POSTGRES_PRISMA_URL is not set.');
   }
 
   const pool = new Pool(createPoolConfig());
