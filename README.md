@@ -27,6 +27,10 @@ API docs:
 - `npm run lint` - run ESLint
 - `npm run format` - run Prettier
 - `npm test` - run tests
+- `npm run prisma:generate` - generate Prisma client
+- `npm run prisma:migrate:dev` - create/apply local Prisma migration
+- `npm run prisma:migrate:deploy` - apply committed migrations
+- `npm run prisma:migrate:status` - show migration status
 
 ## Deployment
 
