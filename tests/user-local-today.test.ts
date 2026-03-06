@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getUserLocalToday } from '../src/utils/user-local-today';
+import { getUserLocalToday } from '../src';
 
 describe('getUserLocalToday', () => {
   it('returns local date in YYYY-MM-DD format for timezone', () => {

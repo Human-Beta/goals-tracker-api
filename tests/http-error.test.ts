@@ -2,7 +2,7 @@ import type { ServerResponse } from 'node:http';
 
 import { describe, expect, it } from 'vitest';
 
-import { createErrorPayload, sendError } from '../src/http/error';
+import { createErrorPayload, sendError } from '../src';
 
 type MockResponse = {
   statusCode: number;

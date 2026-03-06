@@ -2,7 +2,7 @@ import type { IncomingMessage } from 'node:http';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { botServiceAuthGuard, parseBearerToken } from '../src/auth/bot-service-auth';
+import { botServiceAuthGuard, parseBearerToken } from '../src';
 import { env } from '../src/config/env';
 
 const initialBotServiceToken = env.BOT_SERVICE_TOKEN;
