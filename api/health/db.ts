@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-import { queryPostgres } from '@/db/postgres';
+import { queryPostgres } from '../../src/db/postgres';
 
 export default async function healthDb(_req: IncomingMessage, res: ServerResponse): Promise<void> {
   try {

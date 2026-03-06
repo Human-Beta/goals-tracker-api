@@ -1,6 +1,6 @@
 import { Pool, type PoolConfig, type QueryResult, type QueryResultRow } from 'pg';
 
-import { env } from '@/config/env';
+import { env } from '../config/env';
 
 type PostgresCache = {
   pool: Pool | null;

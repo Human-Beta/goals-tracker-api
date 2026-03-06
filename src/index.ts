@@ -1,3 +1,3 @@
-import AxiosUtils from '@/utils/AxiosUtils';
+import AxiosUtils from './utils/AxiosUtils';
 
 export { AxiosUtils };
