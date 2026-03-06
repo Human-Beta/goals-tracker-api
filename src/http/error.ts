@@ -1,11 +1,22 @@
 import type { ServerResponse } from 'node:http';
 
+export const ERROR_CODES = [
+  'BAD_REQUEST',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'CONFLICT',
+  'INTERNAL_ERROR',
+] as const;
+
+export type ErrorCode = (typeof ERROR_CODES)[number];
+
 export type ErrorPayload = {
-  code: string;
+  code: ErrorCode;
   message: string;
 };
 
-export function createErrorPayload(code: string, message: string): ErrorPayload {
+export function createErrorPayload(code: ErrorCode, message: string): ErrorPayload {
   return { code, message };
 }
 
