@@ -4,4 +4,4 @@ This folder contains implementation and runtime documentation for the API.
 
 ## Contents
 
-- [database.md](./database.md) - PostgreSQL usage, connection behavior, and DB health checks.
+- [database.md](./database.md) - Prisma/PostgreSQL schema, migrations, DB health check, and shared DB/auth utilities.

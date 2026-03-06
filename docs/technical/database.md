@@ -3,19 +3,32 @@
 ## Engine
 
 - This project uses **PostgreSQL** as the primary database.
-- Node.js driver: [`pg`](https://www.npmjs.com/package/pg), configured in [`src/db/postgres.ts`](../../src/db/postgres.ts).
-- Connection string comes from `DATABASE_URL`.
+- Primary DB layer: **Prisma ORM** (`prisma` + `@prisma/client`).
+- Prisma datasource connection string comes from `DATABASE_URL`.
 
-## Connection Behavior
+## Prisma Files
 
-- A shared `Pool` instance is cached on `globalThis` to avoid recreating connections during local hot reload/serverless runtime reuse.
-- Pool config:
-  - `max: 5`
-  - `idleTimeoutMillis: 10000`
-  - `connectionTimeoutMillis: 10000`
-- SSL mode:
-  - `development`: SSL disabled
-  - `test/production`: SSL enabled with `rejectUnauthorized: false` (common managed Postgres setup)
+- Schema: [`prisma/schema.prisma`](../../prisma/schema.prisma)
+- Migrations: `prisma/migrations/<timestamp>_*/migration.sql`
+- Prisma client singleton: [`src/db/prisma.ts`](../../src/db/prisma.ts)
+
+## Data Model
+
+Prisma schema defines MVP entities and enums from business spec:
+
+- `users`
+- `goals`
+- `progress_events`
+- `GoalUnit` (`pages | minutes | km`)
+- `GoalStatus` (`active | completed`)
+
+Indexes/FK from business spec are included in the initial migration:
+
+- `goals(user_id, status)`
+- `goals(user_id, end_date)`
+- `progress_events(goal_id, date)`
+- FK `goals.user_id -> users.id`
+- FK `progress_events.goal_id -> goals.id`
 
 ## Data Model Reference
 
@@ -29,15 +42,35 @@ MVP entities currently described there:
 - `goals`
 - `progress_events`
 
+## Migrations
+
+Available scripts:
+
+- `npm run prisma:generate`
+- `npm run prisma:migrate:dev`
+- `npm run prisma:migrate:deploy`
+- `npm run prisma:migrate:status`
+
+For CI/production, use `prisma migrate deploy`.
+For local iterative schema changes, use `prisma migrate dev`.
+
 ## Health Check
 
 - Endpoint: `/api/health/db`
 - Query: `SELECT 1`
 - Success response: `200` with `{ "ok": true, "database": "up" }`
 - Failure response: `503` with `{ "ok": false, "database": "down" }`
+- Current DB health endpoint still uses lightweight `pg` query helper in [`src/db/postgres.ts`](../../src/db/postgres.ts).
+
+## Shared Infrastructure for Upcoming Endpoints
+
+- Bot service auth guard: [`src/auth/bot-service-auth.ts`](../../src/auth/bot-service-auth.ts)
+  - Validates `Authorization: Bearer <BOT_SERVICE_TOKEN>`
+- Unified error payload helpers: [`src/http/error.ts`](../../src/http/error.ts)
+  - Standard format: `{ code, message }`
+- User-local "today" helper (IANA timezone): [`src/utils/user-local-today.ts`](../../src/utils/user-local-today.ts)
 
 ## Practical Notes
 
-- If `DATABASE_URL` is missing, database queries throw `DATABASE_URL is not set.`
-- No migration framework is configured in this repository yet (no Prisma/Drizzle/Knex/TypeORM migration setup).
-- Use parameterized SQL via `queryPostgres(text, values)` for any dynamic values.
+- If `DATABASE_URL` is missing, Prisma/database operations fail at runtime.
+- Keep timezone strings as valid IANA identifiers (for example, `Europe/Uzhgorod`).

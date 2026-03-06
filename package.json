@@ -5,16 +5,23 @@
     "node": ">=20"
   },
   "scripts": {
+    "postinstall": "prisma generate",
     "dev:vercel": "npx vercel dev",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format": "prettier -w .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate:dev": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:migrate:status": "prisma migrate status"
   },
   "dependencies": {
+    "@prisma/client": "^6.16.3",
     "dotenv": "^16",
     "pg": "^8",
+    "prisma": "^6.16.3",
     "zod": "^3"
   },
   "devDependencies": {

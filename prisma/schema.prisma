@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GoalUnit {
+  pages
+  minutes
+  km
+}
+
+enum GoalStatus {
+  active
+  completed
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  timezone       String   @db.Text
+  telegramUserId BigInt?  @unique @map("telegram_user_id")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  goals Goal[]
+
+  @@map("users")
+}
+
+model Goal {
+  id          String     @id @default(uuid()) @db.Uuid
+  userId      String     @map("user_id") @db.Uuid
+  title       String     @db.Text
+  unit        GoalUnit
+  targetValue Decimal    @map("target_value") @db.Decimal(12, 2)
+  startDate   DateTime   @map("start_date") @db.Date
+  endDate     DateTime   @map("end_date") @db.Date
+  status      GoalStatus @default(active)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  user           User            @relation(fields: [userId], references: [id])
+  progressEvents ProgressEvent[]
+
+  @@index([userId, status], map: "goals_user_id_status_idx")
+  @@index([userId, endDate], map: "goals_user_id_end_date_idx")
+  @@map("goals")
+}
+
+model ProgressEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  goalId     String   @map("goal_id") @db.Uuid
+  date       DateTime @db.Date
+  deltaValue Decimal  @map("delta_value") @db.Decimal(12, 2)
+  note       String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  goal Goal @relation(fields: [goalId], references: [id])
+
+  @@index([goalId, date], map: "progress_events_goal_id_date_idx")
+  @@map("progress_events")
+}
