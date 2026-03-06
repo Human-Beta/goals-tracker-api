@@ -3,34 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import healthDb from '../api/health/db';
 import { queryPostgres } from '../src/db/postgres';
+import { createMockResponse } from './helpers/mock-response';
 
 vi.mock('../src/db/postgres', () => ({
   queryPostgres: vi.fn(),
 }));
-
-type MockResponse = {
-  statusCode: number;
-  headers: Record<string, string>;
-  body: string;
-  setHeader: (name: string, value: string) => MockResponse;
-  end: (payload?: unknown) => MockResponse;
-};
-
-function createMockResponse(): MockResponse {
-  return {
-    statusCode: 0,
-    headers: {},
-    body: '',
-    setHeader(name: string, value: string) {
-      this.headers[name] = value;
-      return this;
-    },
-    end(payload?: unknown) {
-      this.body = typeof payload === 'string' ? payload : '';
-      return this;
-    },
-  };
-}
 
 describe('GET /api/health/db', () => {
   beforeEach(() => {
