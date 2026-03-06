@@ -1,6 +1,6 @@
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
-import type { IncomingMessage, ServerResponse } from 'http';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export default function openapi(_req: IncomingMessage, res: ServerResponse): void {
   try {

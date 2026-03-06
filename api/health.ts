@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 export default function health(_req: IncomingMessage, res: ServerResponse): void {
   res.statusCode = 200;
