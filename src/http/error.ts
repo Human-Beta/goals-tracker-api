@@ -1,12 +1,18 @@
 import type { ServerResponse } from 'node:http';
 
 export const ERROR_CODES = [
-  'BAD_REQUEST',
-  'UNAUTHORIZED',
-  'FORBIDDEN',
-  'NOT_FOUND',
-  'CONFLICT',
-  'INTERNAL_ERROR',
+  'bad_request',
+  'unauthorized',
+  'forbidden',
+  'not_found',
+  'conflict',
+  'internal_error',
+  'method_not_allowed',
+  'validation_error',
+  'user_not_found',
+  'goal_not_found',
+  'unit_immutable',
+  'target_below_progress',
 ] as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[number];

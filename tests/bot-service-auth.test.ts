@@ -27,7 +27,7 @@ describe('botServiceAuthGuard', () => {
       ok: false,
       statusCode: 500,
       error: {
-        code: 'INTERNAL_ERROR',
+        code: 'internal_error',
         message: 'Bot service token is not configured',
       },
     });
@@ -42,7 +42,7 @@ describe('botServiceAuthGuard', () => {
       ok: false,
       statusCode: 401,
       error: {
-        code: 'UNAUTHORIZED',
+        code: 'unauthorized',
         message: 'Invalid bot service token',
       },
     });

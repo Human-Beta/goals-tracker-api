@@ -21,17 +21,18 @@ vi.mock('../src/db/prisma', () => ({
 import upsertBotUser from '../api/bot/users/upsert';
 
 type RequestOptions = {
+  method?: string;
   authorization?: string;
   body?: unknown;
 };
 
 const initialBotServiceToken = env.BOT_SERVICE_TOKEN;
 
-function createJsonRequest({ authorization, body }: RequestOptions): IncomingMessage {
+function createJsonRequest({ method, authorization, body }: RequestOptions): IncomingMessage {
   const payload = JSON.stringify(body ?? {});
   const req = Readable.from([payload]) as unknown as IncomingMessage;
 
-  req.method = 'POST';
+  req.method = method ?? 'POST';
   req.headers = authorization ? { authorization } : {};
 
   return req;
@@ -144,7 +145,7 @@ describe('POST /api/bot/users/upsert', () => {
     expect(res.statusCode).toBe(400);
     expect(res.headers['Content-Type']).toBe('application/json; charset=utf-8');
     expect(JSON.parse(res.body)).toEqual({
-      code: 'BAD_REQUEST',
+      code: 'validation_error',
       message: 'timezone must be a valid IANA timezone',
     });
   });
@@ -166,8 +167,27 @@ describe('POST /api/bot/users/upsert', () => {
     expect(res.statusCode).toBe(401);
     expect(res.headers['Content-Type']).toBe('application/json; charset=utf-8');
     expect(JSON.parse(res.body)).toEqual({
-      code: 'UNAUTHORIZED',
+      code: 'unauthorized',
       message: 'Invalid bot service token',
+    });
+  });
+
+  it('returns 405 for unsupported method', async () => {
+    env.BOT_SERVICE_TOKEN = 'expected-token';
+    const req = createJsonRequest({
+      method: 'GET',
+      authorization: 'Bearer expected-token',
+    });
+    const res = createMockResponse();
+
+    await upsertBotUser(req, res as unknown as ServerResponse);
+
+    expect(upsertUserMock).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(405);
+    expect(res.headers.Allow).toBe('POST');
+    expect(JSON.parse(res.body)).toEqual({
+      code: 'method_not_allowed',
+      message: 'Method not allowed',
     });
   });
 });

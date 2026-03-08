@@ -31,7 +31,7 @@ describe('withBotServiceAuth', () => {
     expect(res.statusCode).toBe(401);
     expect(res.headers['Content-Type']).toBe('application/json; charset=utf-8');
     expect(JSON.parse(res.body)).toEqual({
-      code: 'UNAUTHORIZED',
+      code: 'unauthorized',
       message: 'Invalid bot service token',
     });
   });
