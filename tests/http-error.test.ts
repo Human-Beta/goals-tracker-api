@@ -7,15 +7,15 @@ import { createMockResponse } from './helpers/mock-response';
 
 describe('http error helpers', () => {
   it('creates standard error payload', () => {
-    expect(createErrorPayload('UNAUTHORIZED', 'Token is invalid')).toEqual({
-      code: 'UNAUTHORIZED',
+    expect(createErrorPayload('unauthorized', 'Token is invalid')).toEqual({
+      code: 'unauthorized',
       message: 'Token is invalid',
     });
   });
 
   it('writes JSON error response in standard format', () => {
     const res = createMockResponse();
-    const payload = createErrorPayload('NOT_FOUND', 'Goal not found');
+    const payload = createErrorPayload('not_found', 'Goal not found');
 
     sendError(res as unknown as ServerResponse, 404, payload);
 

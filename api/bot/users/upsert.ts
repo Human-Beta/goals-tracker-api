@@ -2,10 +2,17 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { z } from 'zod';
 
-import { createErrorPayload, sendError, prisma, withBotServiceAuth } from '../../../src';
-
-const INT64_MIN = -(2n ** 63n);
-const INT64_MAX = 2n ** 63n - 1n;
+import {
+  INT64_MAX,
+  INT64_MIN,
+  prisma,
+  readJsonBodyOrSendInvalidRequest,
+  sendInternalError,
+  sendOkJson,
+  sendMethodNotAllowed,
+  sendValidationError,
+  withBotServiceAuth,
+} from '../../../src';
 
 const payloadSchema = z.object({
   telegram_user_id: z
@@ -31,38 +38,14 @@ function isIanaTimezone(timeZone: string): boolean {
   }
 }
 
-function readBody(req: IncomingMessage): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-
-    req.on('data', (chunk: Buffer | string) => {
-      if (typeof chunk === 'string') {
-        chunks.push(Buffer.from(chunk));
-      } else {
-        chunks.push(chunk);
-      }
-    });
-    req.on('end', () => {
-      resolve(Buffer.concat(chunks).toString('utf8'));
-    });
-    req.on('error', reject);
-  });
-}
-
-function sendJson(res: ServerResponse, statusCode: number, payload: unknown): void {
-  res.statusCode = statusCode;
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(JSON.stringify(payload));
-}
-
 async function upsertBotUser(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  let body: unknown;
+  if (req.method !== 'POST') {
+    sendMethodNotAllowed(res, ['POST']);
+    return;
+  }
 
-  try {
-    const rawBody = await readBody(req);
-    body = JSON.parse(rawBody);
-  } catch {
-    sendError(res, 400, createErrorPayload('BAD_REQUEST', 'Invalid request body'));
+  const body = await readJsonBodyOrSendInvalidRequest(req, res);
+  if (body === null) {
     return;
   }
 
@@ -70,7 +53,7 @@ async function upsertBotUser(req: IncomingMessage, res: ServerResponse): Promise
 
   if (!parsedPayload.success) {
     const message = parsedPayload.error.issues[0]?.message ?? 'Invalid request body';
-    sendError(res, 400, createErrorPayload('BAD_REQUEST', message));
+    sendValidationError(res, message);
     return;
   }
 
@@ -90,17 +73,17 @@ async function upsertBotUser(req: IncomingMessage, res: ServerResponse): Promise
     });
 
     if (user.telegramUserId === null) {
-      sendError(res, 500, createErrorPayload('INTERNAL_ERROR', 'Failed to upsert user'));
+      sendInternalError(res, 'Failed to upsert user');
       return;
     }
 
-    sendJson(res, 200, {
+    sendOkJson(res, {
       user_id: user.id,
       telegram_user_id: Number(user.telegramUserId),
       timezone: user.timezone,
     });
   } catch {
-    sendError(res, 500, createErrorPayload('INTERNAL_ERROR', 'Failed to upsert user'));
+    sendInternalError(res, 'Failed to upsert user');
   }
 }
 

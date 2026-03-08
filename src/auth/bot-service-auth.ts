@@ -26,7 +26,7 @@ export function botServiceAuthGuard(req: IncomingMessage): BotServiceAuthResult 
     return {
       ok: false,
       statusCode: 500,
-      error: createErrorPayload('INTERNAL_ERROR', 'Bot service token is not configured'),
+      error: createErrorPayload('internal_error', 'Bot service token is not configured'),
     };
   }
 
@@ -36,7 +36,7 @@ export function botServiceAuthGuard(req: IncomingMessage): BotServiceAuthResult 
     return {
       ok: false,
       statusCode: 401,
-      error: createErrorPayload('UNAUTHORIZED', 'Invalid bot service token'),
+      error: createErrorPayload('unauthorized', 'Invalid bot service token'),
     };
   }
 
