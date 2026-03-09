@@ -1,27 +1,26 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
-
 import { Prisma } from '@prisma/client';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import {
   getUserLocalToday,
+  type GoalRecord,
   goalSelect,
   mapGoalResponse,
   parseIsoDate,
   prisma,
   readJsonBodyOrSendInvalidRequest,
+  resolveGoalForUser,
+  resolveGoalIdParam,
   resolveTelegramRequestUser,
-  sendGoalNotFound,
   sendInternalError,
   sendInvalidRequestBody,
-  sendOkJson,
   sendMethodNotAllowed,
+  sendOkJson,
   sendTargetBelowProgress,
   sendUnitImmutable,
-  updateGoalPayloadSchema,
   sendValidationError,
+  updateGoalPayloadSchema,
   withBotServiceAuth,
-  type GoalRecord,
-  type TelegramRequestUser,
 } from '../../src';
 
 type UpdateGoalPayload = {
@@ -30,36 +29,6 @@ type UpdateGoalPayload = {
   start_date?: string;
   end_date?: string;
 };
-
-function extractGoalId(req: IncomingMessage): string | null {
-  const url = req.url ?? '';
-  const pathname = new URL(url, 'http://localhost').pathname;
-  const segments = pathname.split('/').filter(Boolean);
-  const goalId = segments[segments.length - 1];
-
-  return goalId || null;
-}
-
-async function resolveGoalForUser(
-  goalId: string,
-  user: TelegramRequestUser,
-  res: ServerResponse
-): Promise<GoalRecord | null> {
-  const goal = await prisma.goal.findFirst({
-    where: {
-      id: goalId,
-      userId: user.id,
-    },
-    select: goalSelect,
-  });
-
-  if (!goal) {
-    sendGoalNotFound(res);
-    return null;
-  }
-
-  return goal;
-}
 
 async function readAndValidateUpdatePayload(
   req: IncomingMessage,
@@ -156,14 +125,12 @@ async function updateGoal(req: IncomingMessage, res: ServerResponse): Promise<vo
     return;
   }
 
-  const goalId = extractGoalId(req);
-
+  const goalId = resolveGoalIdParam(req, res);
   if (!goalId) {
-    sendValidationError(res, 'goalId is required');
     return;
   }
 
-  const goal = await resolveGoalForUser(goalId, user, res);
+  const goal = await resolveGoalForUser(goalId, user.id, goalSelect, res);
   if (!goal) {
     return;
   }

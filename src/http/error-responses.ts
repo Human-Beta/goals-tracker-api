@@ -18,12 +18,20 @@ export function sendGoalNotFound(res: ServerResponse): void {
   sendError(res, 404, createErrorPayload('goal_not_found', 'Goal not found'));
 }
 
+export function sendEventNotFound(res: ServerResponse): void {
+  sendError(res, 404, createErrorPayload('event_not_found', 'Progress event not found'));
+}
+
 export function sendUnitImmutable(res: ServerResponse): void {
   sendError(res, 400, createErrorPayload('unit_immutable', 'unit cannot be changed after goal creation'));
 }
 
 export function sendTargetBelowProgress(res: ServerResponse): void {
   sendError(res, 409, createErrorPayload('target_below_progress', 'target_value cannot be less than current progress'));
+}
+
+export function sendConflict(res: ServerResponse, message: string): void {
+  sendError(res, 409, createErrorPayload('conflict', message));
 }
 
 export function sendInternalError(res: ServerResponse, message: string): void {

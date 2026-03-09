@@ -67,7 +67,7 @@ function createJsonRequest({ method, url, authorization, telegramUserId, body }:
 
 function createGoalRecord(overrides: Partial<Record<string, unknown>> = {}) {
   return {
-    id: 'goal-1',
+    id: '11111111-1111-1111-1111-111111111111',
     userId: 'user-1',
     title: 'Read book',
     unit: 'pages',
@@ -134,7 +134,7 @@ describe('goals write endpoints', () => {
     expect(res.statusCode).toBe(201);
     expect(res.headers['Content-Type']).toBe('application/json; charset=utf-8');
     expect(JSON.parse(res.body)).toEqual({
-      id: 'goal-1',
+      id: '11111111-1111-1111-1111-111111111111',
       user_id: 'user-1',
       title: 'Read book',
       unit: 'pages',
@@ -169,7 +169,7 @@ describe('goals write endpoints', () => {
 
     const req = createJsonRequest({
       method: 'PATCH',
-      url: '/api/goals/goal-1',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
       body: {
@@ -183,11 +183,11 @@ describe('goals write endpoints', () => {
     await updateGoal(req, res as unknown as ServerResponse);
 
     expect(aggregateProgressMock).toHaveBeenCalledWith({
-      where: { goalId: 'goal-1' },
+      where: { goalId: '11111111-1111-1111-1111-111111111111' },
       _sum: { deltaValue: true },
     });
     expect(updateGoalMock).toHaveBeenCalledWith({
-      where: { id: 'goal-1' },
+      where: { id: '11111111-1111-1111-1111-111111111111' },
       data: {
         title: 'Read clean code',
         targetValue: new Prisma.Decimal('120'),
@@ -208,7 +208,7 @@ describe('goals write endpoints', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body)).toEqual({
-      id: 'goal-1',
+      id: '11111111-1111-1111-1111-111111111111',
       user_id: 'user-1',
       title: 'Read clean code',
       unit: 'pages',
@@ -261,7 +261,7 @@ describe('goals write endpoints', () => {
 
     const req = createJsonRequest({
       method: 'PATCH',
-      url: '/api/goals/goal-1',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
       body: {
@@ -289,7 +289,7 @@ describe('goals write endpoints', () => {
 
     const req = createJsonRequest({
       method: 'PATCH',
-      url: '/api/goals/goal-1',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
       body: {
@@ -308,6 +308,34 @@ describe('goals write endpoints', () => {
     });
   });
 
+  it('returns 400 when goalId is not a valid UUID', async () => {
+    findUniqueUserMock.mockResolvedValueOnce({
+      id: 'user-1',
+      timezone: 'Europe/Kyiv',
+    });
+
+    const req = createJsonRequest({
+      method: 'PATCH',
+      url: '/api/goals/asd',
+      authorization: 'Bearer expected-token',
+      telegramUserId: '123456',
+      body: {
+        title: 'New title',
+      },
+    });
+    const res = createMockResponse();
+
+    await updateGoal(req, res as unknown as ServerResponse);
+
+    expect(findFirstGoalMock).not.toHaveBeenCalled();
+    expect(updateGoalMock).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(400);
+    expect(JSON.parse(res.body)).toEqual({
+      code: 'validation_error',
+      message: 'goalId must be a valid UUID',
+    });
+  });
+
   it('returns 409 when target_value is below current progress', async () => {
     findUniqueUserMock.mockResolvedValueOnce({
       id: 'user-1',
@@ -322,7 +350,7 @@ describe('goals write endpoints', () => {
 
     const req = createJsonRequest({
       method: 'PATCH',
-      url: '/api/goals/goal-1',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
       body: {
@@ -377,7 +405,7 @@ describe('goals write endpoints', () => {
 
     const req = createJsonRequest({
       method: 'PATCH',
-      url: '/api/goals/goal-missing',
+      url: '/api/goals/33333333-3333-3333-3333-333333333333',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
       body: {

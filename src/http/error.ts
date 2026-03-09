@@ -11,6 +11,7 @@ export const ERROR_CODES = [
   'validation_error',
   'user_not_found',
   'goal_not_found',
+  'event_not_found',
   'unit_immutable',
   'target_below_progress',
 ] as const;
