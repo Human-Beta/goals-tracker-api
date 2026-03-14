@@ -2,15 +2,24 @@
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 20+ (recommended `>=20.19`)
+- PostgreSQL database
 
 ## Run locally
 
 ```bash
-npm i
+npm ci
 cp .env.example .env
+npm run prisma:generate
+npm run prisma:migrate:deploy
 npm run dev:vercel
 ```
+
+Required `.env` variables:
+
+- `DATABASE_POSTGRES_PRISMA_URL` - Prisma runtime connection string
+- `DATABASE_POSTGRES_URL_NON_POOLING` - direct DB connection string for Prisma migrations
+- `BOT_SERVICE_TOKEN` - shared token for bot service authentication
 
 Then open `http://localhost:3000/api/health`.
 
@@ -32,6 +41,15 @@ API docs:
 - `npm run prisma:migrate:dev` - create/apply local Prisma migration
 - `npm run prisma:migrate:deploy` - apply committed migrations
 - `npm run prisma:migrate:status` - show migration status
+
+## Local QA checklist
+
+```bash
+npm run format
+npm run typecheck
+npm run lint
+npm test
+```
 
 ## Deployment
 

@@ -45,8 +45,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /goals:
+    parameters:
+      - $ref: '#/components/parameters/XTelegramUserIdHeader'
     post:
       tags: [Goals]
       summary: Create goal
@@ -63,11 +69,17 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoalDetail'
+                $ref: '#/components/schemas/GoalBase'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     get:
       tags: [Goals]
@@ -86,12 +98,21 @@ paths:
                     items:
                       $ref: '#/components/schemas/GoalListItem'
                 required: [items]
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /goals/{goalId}:
     parameters:
       - $ref: '#/components/parameters/GoalIdPath'
+      - $ref: '#/components/parameters/XTelegramUserIdHeader'
     get:
       tags: [Goals]
       summary: Get goal details
@@ -103,12 +124,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GoalDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     patch:
       tags: [Goals]
@@ -129,7 +154,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GoalDetail'
+                $ref: '#/components/schemas/GoalBase'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -138,10 +163,15 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /goals/{goalId}/progress:
     parameters:
       - $ref: '#/components/parameters/GoalIdPath'
+      - $ref: '#/components/parameters/XTelegramUserIdHeader'
     post:
       tags: [Progress]
       summary: Add progress (delta)
@@ -165,6 +195,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     get:
       tags: [Progress]
@@ -193,11 +229,16 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /goals/{goalId}/progress/{eventId}:
     parameters:
       - $ref: '#/components/parameters/GoalIdPath'
       - $ref: '#/components/parameters/EventIdPath'
+      - $ref: '#/components/parameters/XTelegramUserIdHeader'
     patch:
       tags: [Progress]
       summary: Update progress event
@@ -223,6 +264,10 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
     delete:
       tags: [Progress]
@@ -231,10 +276,16 @@ paths:
       responses:
         '204':
           description: Event deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 components:
   securitySchemes:
@@ -245,6 +296,14 @@ components:
       description: Bearer token for bot-server.
 
   parameters:
+    XTelegramUserIdHeader:
+      name: X-Telegram-User-Id
+      in: header
+      required: true
+      description: Telegram user id from bot-server.
+      schema:
+        type: integer
+        format: int64
     GoalIdPath:
       name: goalId
       in: path
@@ -282,13 +341,6 @@ components:
         enum: [asc, desc]
         default: asc
 
-  headers:
-    XTelegramUserId:
-      description: Telegram user id from bot-server.
-      schema:
-        type: integer
-        format: int64
-
   schemas:
     GoalUnit:
       type: string
@@ -298,11 +350,28 @@ components:
       type: string
       enum: [active, completed]
 
+    ErrorCode:
+      type: string
+      enum:
+        - bad_request
+        - unauthorized
+        - forbidden
+        - not_found
+        - conflict
+        - internal_error
+        - method_not_allowed
+        - validation_error
+        - user_not_found
+        - goal_not_found
+        - event_not_found
+        - unit_immutable
+        - target_below_progress
+
     Error:
       type: object
       properties:
         code:
-          type: string
+          $ref: '#/components/schemas/ErrorCode'
           example: validation_error
         message:
           type: string
@@ -399,7 +468,7 @@ components:
           format: double
       required: [id, title, percent_complete, days_left, pace_current_7d]
 
-    GoalDetail:
+    GoalBase:
       type: object
       properties:
         id:
@@ -423,51 +492,6 @@ components:
           format: date
         status:
           $ref: '#/components/schemas/GoalStatus'
-        current_value:
-          type: number
-          format: double
-        remaining_value:
-          type: number
-          format: double
-        percent_complete:
-          type: number
-          format: double
-        days_left:
-          type: integer
-        days_left_for_pace:
-          type: integer
-        days_total:
-          type: integer
-        days_elapsed:
-          type: integer
-        pace_expected_per_day:
-          type: number
-          format: double
-        pace_required_per_day:
-          type: number
-          format: double
-        pace_current_7d:
-          type: number
-          format: double
-        pace_current_30d:
-          type: number
-          format: double
-        pace_current_all:
-          type: number
-          format: double
-        eta_date:
-          type: string
-          format: date
-          nullable: true
-        expected_by_today:
-          type: number
-          format: double
-        behind_value:
-          type: number
-          format: double
-        catchup_pace_next_7_days:
-          type: number
-          format: double
         created_at:
           type: string
           format: date-time
@@ -483,23 +507,76 @@ components:
         - start_date
         - end_date
         - status
-        - current_value
-        - remaining_value
-        - percent_complete
-        - days_left
-        - days_left_for_pace
-        - days_total
-        - days_elapsed
-        - pace_expected_per_day
-        - pace_required_per_day
-        - pace_current_7d
-        - pace_current_30d
-        - pace_current_all
-        - expected_by_today
-        - behind_value
-        - catchup_pace_next_7_days
         - created_at
         - updated_at
+
+    GoalDetail:
+      allOf:
+        - $ref: '#/components/schemas/GoalBase'
+        - type: object
+          properties:
+            current_value:
+              type: number
+              format: double
+            remaining_value:
+              type: number
+              format: double
+            percent_complete:
+              type: number
+              format: double
+            days_left:
+              type: integer
+            days_left_for_pace:
+              type: integer
+            days_total:
+              type: integer
+            days_elapsed:
+              type: integer
+            pace_expected_per_day:
+              type: number
+              format: double
+            pace_required_per_day:
+              type: number
+              format: double
+            pace_current_7d:
+              type: number
+              format: double
+            pace_current_30d:
+              type: number
+              format: double
+            pace_current_all:
+              type: number
+              format: double
+            eta_date:
+              type: string
+              format: date
+              nullable: true
+            expected_by_today:
+              type: number
+              format: double
+            behind_value:
+              type: number
+              format: double
+            catchup_pace_next_7_days:
+              type: number
+              format: double
+          required:
+            - current_value
+            - remaining_value
+            - percent_complete
+            - days_left
+            - days_left_for_pace
+            - days_total
+            - days_elapsed
+            - pace_expected_per_day
+            - pace_required_per_day
+            - pace_current_7d
+            - pace_current_30d
+            - pace_current_all
+            - eta_date
+            - expected_by_today
+            - behind_value
+            - catchup_pace_next_7_days
 
     CreateProgressEventRequest:
       type: object
@@ -568,9 +645,6 @@ components:
             $ref: '#/components/schemas/Error'
     Unauthorized:
       description: Invalid or missing service token
-      headers:
-        X-Telegram-User-Id:
-          $ref: '#/components/headers/XTelegramUserId'
       content:
         application/json:
           schema:
@@ -583,6 +657,18 @@ components:
             $ref: '#/components/schemas/Error'
     Conflict:
       description: Domain rule conflict (e.g., target_value < current_value)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    MethodNotAllowed:
+      description: HTTP method is not supported for this endpoint
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
       content:
         application/json:
           schema:

@@ -55,6 +55,32 @@ Available scripts:
 For CI/production, use `prisma migrate deploy`.
 For local iterative schema changes, use `prisma migrate dev`.
 
+## Local Prisma Workflow
+
+Use this sequence for local development:
+
+1. Configure environment variables in `.env`:
+   - `DATABASE_POSTGRES_PRISMA_URL`
+   - `DATABASE_POSTGRES_URL_NON_POOLING`
+2. Install dependencies and generate client:
+   - `npm ci`
+   - `npm run prisma:generate`
+3. Apply committed migrations to local DB:
+   - `npm run prisma:migrate:deploy`
+4. Verify migration state:
+   - `npm run prisma:migrate:status`
+5. If you changed schema locally, create/apply a new migration:
+   - `npm run prisma:migrate:dev`
+
+## Local Verification Before Commit
+
+Run the same baseline checks as project CI plus formatting:
+
+1. `npm run format`
+2. `npm run typecheck`
+3. `npm run lint`
+4. `npm test`
+
 ### Vercel Deployment Flow
 
 - Vercel build command is `npm run build:vercel`.

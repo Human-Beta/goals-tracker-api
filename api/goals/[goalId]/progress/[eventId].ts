@@ -36,13 +36,19 @@ const goalProgressStatusSelect = {
 } satisfies Prisma.GoalSelect;
 
 async function resolveProgressEventForGoal(eventId: string, goalId: string, res: ServerResponse) {
-  const event = await prisma.progressEvent.findFirst({
-    where: {
-      id: eventId,
-      goalId,
-    },
-    select: progressEventSelect,
-  });
+  let event: Prisma.ProgressEventGetPayload<{ select: typeof progressEventSelect }> | null = null;
+  try {
+    event = await prisma.progressEvent.findFirst({
+      where: {
+        id: eventId,
+        goalId,
+      },
+      select: progressEventSelect,
+    });
+  } catch {
+    sendInternalError(res, 'Failed to resolve progress event');
+    return null;
+  }
 
   if (!event) {
     sendEventNotFound(res);
