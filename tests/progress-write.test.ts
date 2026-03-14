@@ -506,6 +506,35 @@ describe('progress write endpoints', () => {
     });
   });
 
+  it('returns 500 when progress event lookup fails', async () => {
+    findUniqueUserMock.mockResolvedValueOnce({
+      id: 'user-1',
+      timezone: 'Europe/Kyiv',
+    });
+    findFirstGoalMock.mockResolvedValueOnce(createGoalRecord());
+    findFirstProgressEventMock.mockRejectedValueOnce(new Error('db unavailable'));
+
+    const req = createJsonRequest({
+      method: 'PATCH',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111/progress/44444444-4444-4444-4444-444444444444',
+      authorization: 'Bearer expected-token',
+      telegramUserId: '123456',
+      body: {
+        delta_value: 15,
+      },
+    });
+    const res = createMockResponse();
+
+    await progressEventWriteHandler(req, res as unknown as ServerResponse);
+
+    expect(transactionMock).not.toHaveBeenCalled();
+    expect(res.statusCode).toBe(500);
+    expect(JSON.parse(res.body)).toEqual({
+      code: 'internal_error',
+      message: 'Failed to resolve progress event',
+    });
+  });
+
   it('returns method_not_allowed for create endpoint', async () => {
     const req = createJsonRequest({
       method: 'PUT',

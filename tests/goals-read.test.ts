@@ -334,6 +334,30 @@ describe('goals read endpoints', () => {
     });
   });
 
+  it('returns 500 when goal lookup fails', async () => {
+    findUniqueUserMock.mockResolvedValueOnce({
+      id: 'user-1',
+      timezone: 'Europe/Kyiv',
+    });
+    findFirstGoalMock.mockRejectedValueOnce(new Error('db unavailable'));
+
+    const req = createJsonRequest({
+      method: 'GET',
+      url: '/api/goals/33333333-3333-3333-3333-333333333333',
+      authorization: 'Bearer expected-token',
+      telegramUserId: '123456',
+    });
+    const res = createMockResponse();
+
+    await goalEndpoint(req, res as unknown as ServerResponse);
+
+    expect(res.statusCode).toBe(500);
+    expect(JSON.parse(res.body)).toEqual({
+      code: 'internal_error',
+      message: 'Failed to resolve goal',
+    });
+  });
+
   it('returns 400 when goalId is invalid for get by id', async () => {
     findUniqueUserMock.mockResolvedValueOnce({
       id: 'user-1',

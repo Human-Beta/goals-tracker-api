@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { prisma } from '../db/prisma';
-import { sendUserNotFound, sendValidationError } from './error-responses';
+import { sendInternalError, sendUserNotFound, sendValidationError } from './error-responses';
 import { parseTelegramUserIdHeader } from './telegram-user-id';
 
 export type TelegramRequestUser = {
@@ -20,10 +20,16 @@ export async function resolveTelegramRequestUser(
     return null;
   }
 
-  const user = await prisma.user.findUnique({
-    where: { telegramUserId: telegramUserIdResult.telegramUserId },
-    select: { id: true, timezone: true },
-  });
+  let user: { id: string; timezone: string } | null = null;
+  try {
+    user = await prisma.user.findUnique({
+      where: { telegramUserId: telegramUserIdResult.telegramUserId },
+      select: { id: true, timezone: true },
+    });
+  } catch {
+    sendInternalError(res, 'Failed to resolve user context');
+    return null;
+  }
 
   if (!user) {
     sendUserNotFound(res);

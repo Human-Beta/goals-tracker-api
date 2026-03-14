@@ -62,6 +62,21 @@ describe('resolveTelegramRequestUser', () => {
     });
   });
 
+  it('returns internal_error when database lookup fails', async () => {
+    findUniqueUserMock.mockRejectedValueOnce(new Error('db unavailable'));
+    const res = createMockResponse();
+
+    const user = await resolveTelegramRequestUser(createRequest('123456789'), res as unknown as ServerResponse);
+
+    expect(user).toBeNull();
+    expect(res.statusCode).toBe(500);
+    expect(res.headers['Content-Type']).toBe('application/json; charset=utf-8');
+    expect(JSON.parse(res.body)).toEqual({
+      code: 'internal_error',
+      message: 'Failed to resolve user context',
+    });
+  });
+
   it('returns resolved user when header is valid and user exists', async () => {
     findUniqueUserMock.mockResolvedValueOnce({
       id: 'user-123',
