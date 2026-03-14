@@ -71,6 +71,7 @@ import upsertBotUser from '../api/bot/users/upsert';
 import goalEndpoint from '../api/goals/[goalId]';
 import progressEventWriteEndpoint from '../api/goals/[goalId]/progress/[eventId]';
 import progressEndpoint from '../api/goals/[goalId]/progress';
+import progressTotalDaysEndpoint from '../api/goals/[goalId]/progress/total-days';
 import goalsEndpoint from '../api/goals';
 
 type RequestMethod = 'POST' | 'GET' | 'PATCH' | 'DELETE' | 'PUT';
@@ -383,6 +384,31 @@ describe('MVP contract smoke', () => {
           delta_value: 10,
         },
       ],
+    });
+  });
+
+  it('happy-path: GET /goals/{goalId}/progress/total-days', async () => {
+    findUniqueUserMock.mockResolvedValueOnce(userRecord());
+    findFirstGoalMock.mockResolvedValueOnce(goalRecord());
+    groupByProgressMock.mockResolvedValueOnce([
+      { date: new Date('2026-03-03T00:00:00.000Z') },
+      { date: new Date('2026-03-05T00:00:00.000Z') },
+    ]);
+
+    const req = createJsonRequest({
+      method: 'GET',
+      url: '/api/goals/11111111-1111-1111-1111-111111111111/progress/total-days',
+      authorization: 'Bearer expected-token',
+      telegramUserId: '123456',
+    });
+    const res = createMockResponse();
+
+    await progressTotalDaysEndpoint(req, res as unknown as ServerResponse);
+
+    expect(res.statusCode).toBe(200);
+    expect(JSON.parse(res.body)).toEqual({
+      goal_id: '11111111-1111-1111-1111-111111111111',
+      total_days: 2,
     });
   });
 

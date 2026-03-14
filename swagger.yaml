@@ -234,6 +234,32 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /goals/{goalId}/progress/total-days:
+    parameters:
+      - $ref: '#/components/parameters/GoalIdPath'
+      - $ref: '#/components/parameters/XTelegramUserIdHeader'
+    get:
+      tags: [Progress]
+      summary: Get total number of unique progress days for goal
+      operationId: getProgressTotalDays
+      responses:
+        '200':
+          description: Total unique progress days
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProgressTotalDays'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '405':
+          $ref: '#/components/responses/MethodNotAllowed'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /goals/{goalId}/progress/{eventId}:
     parameters:
       - $ref: '#/components/parameters/GoalIdPath'
@@ -635,6 +661,17 @@ components:
           type: string
           format: date-time
       required: [id, goal_id, date, delta_value, created_at, updated_at]
+
+    ProgressTotalDays:
+      type: object
+      properties:
+        goal_id:
+          type: string
+          format: uuid
+        total_days:
+          type: integer
+          minimum: 0
+      required: [goal_id, total_days]
 
   responses:
     BadRequest:
