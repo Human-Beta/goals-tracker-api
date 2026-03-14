@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatIsoDate, isIsoDate, parseIsoDate } from '../src';
+import { addIsoDays, diffIsoDays, formatIsoDate, getIsoDateDaysAgoInclusive, isIsoDate, parseIsoDate } from '../src';
 
 describe('iso-date utils', () => {
   it('validates ISO dates in YYYY-MM-DD format', () => {
@@ -28,5 +28,20 @@ describe('iso-date utils', () => {
     const date = new Date('2026-03-08T15:30:45.123Z');
 
     expect(formatIsoDate(date)).toBe('2026-03-08');
+  });
+
+  it('calculates day difference between ISO dates', () => {
+    expect(diffIsoDays('2026-03-01', '2026-03-08')).toBe(7);
+    expect(diffIsoDays('2026-03-08', '2026-03-01')).toBe(-7);
+  });
+
+  it('adds calendar days to ISO date', () => {
+    expect(addIsoDays('2026-03-08', 3)).toBe('2026-03-11');
+    expect(addIsoDays('2026-03-08', -8)).toBe('2026-02-28');
+  });
+
+  it('resolves inclusive start date for N-day window ending today', () => {
+    expect(getIsoDateDaysAgoInclusive('2026-03-08', 7)).toBe('2026-03-02');
+    expect(getIsoDateDaysAgoInclusive('2026-03-08', 30)).toBe('2026-02-07');
   });
 });

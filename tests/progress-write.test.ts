@@ -49,7 +49,7 @@ vi.mock('../src/db/prisma', () => ({
 import createProgressEvent from '../api/goals/[goalId]/progress';
 import progressEventWriteHandler from '../api/goals/[goalId]/progress/[eventId]';
 
-type RequestMethod = 'POST' | 'PATCH' | 'DELETE' | 'GET';
+type RequestMethod = 'POST' | 'PATCH' | 'DELETE' | 'GET' | 'PUT';
 
 type RequestOptions = {
   method: RequestMethod;
@@ -508,7 +508,7 @@ describe('progress write endpoints', () => {
 
   it('returns method_not_allowed for create endpoint', async () => {
     const req = createJsonRequest({
-      method: 'GET',
+      method: 'PUT',
       url: '/api/goals/11111111-1111-1111-1111-111111111111/progress',
       authorization: 'Bearer expected-token',
       telegramUserId: '123456',
@@ -518,7 +518,7 @@ describe('progress write endpoints', () => {
     await createProgressEvent(req, res as unknown as ServerResponse);
 
     expect(res.statusCode).toBe(405);
-    expect(res.headers.Allow).toBe('POST');
+    expect(res.headers.Allow).toBe('GET, POST');
     expect(JSON.parse(res.body)).toEqual({
       code: 'method_not_allowed',
       message: 'Method not allowed',

@@ -2,6 +2,9 @@ import { Prisma } from '@prisma/client';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import {
+  computeGoalMetrics,
+  formatIsoDate,
+  getIsoDateDaysAgoInclusive,
   getUserLocalToday,
   type GoalRecord,
   goalSelect,
@@ -19,6 +22,7 @@ import {
   sendTargetBelowProgress,
   sendUnitImmutable,
   sendValidationError,
+  type TelegramRequestUser,
   updateGoalPayloadSchema,
   withBotServiceAuth,
 } from '../../src';
@@ -114,27 +118,63 @@ function buildGoalUpdateData(payload: UpdateGoalPayload): Prisma.GoalUpdateInput
   return data;
 }
 
-async function updateGoal(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (req.method !== 'PATCH') {
-    sendMethodNotAllowed(res, ['PATCH']);
-    return;
-  }
+async function sendGoalDetails(goal: GoalRecord, today: string, res: ServerResponse): Promise<void> {
+  const current7dStart = getIsoDateDaysAgoInclusive(today, 7);
+  const current30dStart = getIsoDateDaysAgoInclusive(today, 30);
 
-  const user = await resolveTelegramRequestUser(req, res);
-  if (!user) {
-    return;
-  }
+  try {
+    const [cumulativeProgress, current7dProgress, current30dProgress] = await Promise.all([
+      prisma.progressEvent.aggregate({
+        where: { goalId: goal.id },
+        _sum: { deltaValue: true },
+      }),
+      prisma.progressEvent.aggregate({
+        where: {
+          goalId: goal.id,
+          date: {
+            gte: parseIsoDate(current7dStart),
+            lte: parseIsoDate(today),
+          },
+        },
+        _sum: { deltaValue: true },
+      }),
+      prisma.progressEvent.aggregate({
+        where: {
+          goalId: goal.id,
+          date: {
+            gte: parseIsoDate(current30dStart),
+            lte: parseIsoDate(today),
+          },
+        },
+        _sum: { deltaValue: true },
+      }),
+    ]);
 
-  const goalId = resolveGoalIdParam(req, res);
-  if (!goalId) {
-    return;
-  }
+    const metrics = computeGoalMetrics({
+      target_value: Number(goal.targetValue),
+      start_date: formatIsoDate(goal.startDate),
+      end_date: formatIsoDate(goal.endDate),
+      today,
+      current_value: Number(cumulativeProgress._sum.deltaValue ?? 0),
+      current_7d_sum: Number(current7dProgress._sum.deltaValue ?? 0),
+      current_30d_sum: Number(current30dProgress._sum.deltaValue ?? 0),
+    });
 
-  const goal = await resolveGoalForUser(goalId, user.id, goalSelect, res);
-  if (!goal) {
-    return;
+    sendOkJson(res, {
+      ...mapGoalResponse(goal),
+      ...metrics,
+    });
+  } catch {
+    sendInternalError(res, 'Failed to fetch goal');
   }
+}
 
+async function updateGoal(
+  req: IncomingMessage,
+  res: ServerResponse,
+  goal: GoalRecord,
+  user: TelegramRequestUser
+): Promise<void> {
   const today = getUserLocalToday(user.timezone);
   const payload = await readAndValidateUpdatePayload(req, res, today);
   if (!payload) {
@@ -165,4 +205,34 @@ async function updateGoal(req: IncomingMessage, res: ServerResponse): Promise<vo
   }
 }
 
-export default withBotServiceAuth(updateGoal);
+async function goalHandler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method !== 'GET' && req.method !== 'PATCH') {
+    sendMethodNotAllowed(res, ['GET', 'PATCH']);
+    return;
+  }
+
+  const user = await resolveTelegramRequestUser(req, res);
+  if (!user) {
+    return;
+  }
+
+  const goalId = resolveGoalIdParam(req, res);
+  if (!goalId) {
+    return;
+  }
+
+  const goal = await resolveGoalForUser(goalId, user.id, goalSelect, res);
+  if (!goal) {
+    return;
+  }
+
+  if (req.method === 'GET') {
+    const today = getUserLocalToday(user.timezone);
+    await sendGoalDetails(goal, today, res);
+    return;
+  }
+
+  await updateGoal(req, res, goal, user);
+}
+
+export default withBotServiceAuth(goalHandler);
