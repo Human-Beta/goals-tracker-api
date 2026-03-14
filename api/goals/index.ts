@@ -3,7 +3,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { Prisma } from '@prisma/client';
 
 import {
+  computeGoalMetrics,
   createGoalPayloadSchema,
+  formatIsoDate,
+  getIsoDateDaysAgoInclusive,
   getUserLocalToday,
   goalSelect,
   mapGoalResponse,
@@ -11,24 +14,109 @@ import {
   prisma,
   readJsonBodyOrSendInvalidRequest,
   resolveTelegramRequestUser,
-  sendInternalError,
   sendCreatedJson,
+  sendInternalError,
   sendMethodNotAllowed,
+  sendOkJson,
   sendValidationError,
+  type TelegramRequestUser,
   withBotServiceAuth,
 } from '../../src';
 
-async function createGoal(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (req.method !== 'POST') {
-    sendMethodNotAllowed(res, ['POST']);
-    return;
-  }
+const goalListSelect = {
+  id: true,
+  title: true,
+  targetValue: true,
+  startDate: true,
+  endDate: true,
+} satisfies Prisma.GoalSelect;
 
-  const user = await resolveTelegramRequestUser(req, res);
-  if (!user) {
-    return;
-  }
+type GoalListProgressRow = {
+  goalId: string;
+  _sum: {
+    deltaValue: Prisma.Decimal | null;
+  };
+};
 
+function mapGoalProgressSums(rows: GoalListProgressRow[]): Map<string, number> {
+  return new Map(rows.map(row => [row.goalId, Number(row._sum.deltaValue ?? 0)]));
+}
+
+async function sendGoalsList(user: TelegramRequestUser, res: ServerResponse): Promise<void> {
+  const today = getUserLocalToday(user.timezone);
+  const current7dStart = getIsoDateDaysAgoInclusive(today, 7);
+
+  try {
+    const goals = await prisma.goal.findMany({
+      where: { userId: user.id },
+      select: goalListSelect,
+    });
+
+    if (goals.length === 0) {
+      sendOkJson(res, { items: [] });
+      return;
+    }
+
+    const goalIds = goals.map(goal => goal.id);
+    const [cumulativeProgressRows, current7dProgressRows] = await Promise.all([
+      prisma.progressEvent.groupBy({
+        by: ['goalId'],
+        where: {
+          goalId: {
+            in: goalIds,
+          },
+        },
+        _sum: {
+          deltaValue: true,
+        },
+      }),
+      prisma.progressEvent.groupBy({
+        by: ['goalId'],
+        where: {
+          goalId: {
+            in: goalIds,
+          },
+          date: {
+            gte: parseIsoDate(current7dStart),
+            lte: parseIsoDate(today),
+          },
+        },
+        _sum: {
+          deltaValue: true,
+        },
+      }),
+    ]);
+
+    const cumulativeProgressByGoalId = mapGoalProgressSums(cumulativeProgressRows);
+    const current7dProgressByGoalId = mapGoalProgressSums(current7dProgressRows);
+
+    const items = goals.map(goal => {
+      const metrics = computeGoalMetrics({
+        target_value: Number(goal.targetValue),
+        start_date: formatIsoDate(goal.startDate),
+        end_date: formatIsoDate(goal.endDate),
+        today,
+        current_value: cumulativeProgressByGoalId.get(goal.id) ?? 0,
+        current_7d_sum: current7dProgressByGoalId.get(goal.id) ?? 0,
+        current_30d_sum: 0,
+      });
+
+      return {
+        id: goal.id,
+        title: goal.title,
+        percent_complete: metrics.percent_complete,
+        days_left: metrics.days_left,
+        pace_current_7d: metrics.pace_current_7d,
+      };
+    });
+
+    sendOkJson(res, { items });
+  } catch {
+    sendInternalError(res, 'Failed to list goals');
+  }
+}
+
+async function createGoal(req: IncomingMessage, res: ServerResponse, user: TelegramRequestUser): Promise<void> {
   const body = await readJsonBodyOrSendInvalidRequest(req, res);
   if (body === null) {
     return;
@@ -75,4 +163,23 @@ async function createGoal(req: IncomingMessage, res: ServerResponse): Promise<vo
   }
 }
 
-export default withBotServiceAuth(createGoal);
+async function goalsHandler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    sendMethodNotAllowed(res, ['GET', 'POST']);
+    return;
+  }
+
+  const user = await resolveTelegramRequestUser(req, res);
+  if (!user) {
+    return;
+  }
+
+  if (req.method === 'GET') {
+    await sendGoalsList(user, res);
+    return;
+  }
+
+  await createGoal(req, res, user);
+}
+
+export default withBotServiceAuth(goalsHandler);

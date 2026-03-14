@@ -7,6 +7,7 @@ import {
   getUserLocalToday,
   mapProgressEventResponse,
   parseIsoDate,
+  parseProgressListQuery,
   prisma,
   progressEventSelect,
   readJsonBodyOrSendInvalidRequest,
@@ -18,7 +19,9 @@ import {
   sendCreatedJson,
   sendInternalError,
   sendMethodNotAllowed,
+  sendOkJson,
   sendValidationError,
+  type TelegramRequestUser,
   withBotServiceAuth,
 } from '../../../../src';
 
@@ -28,27 +31,50 @@ const goalProgressStatusSelect = {
   targetValue: true,
 } satisfies Prisma.GoalSelect;
 
-async function createProgressEvent(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  if (req.method !== 'POST') {
-    sendMethodNotAllowed(res, ['POST']);
+async function sendProgressEventsList(req: IncomingMessage, res: ServerResponse, goalId: string): Promise<void> {
+  const query = parseProgressListQuery(req, res);
+  if (!query) {
     return;
   }
 
-  const user = await resolveTelegramRequestUser(req, res);
-  if (!user) {
-    return;
+  const dateFilter: Prisma.DateTimeFilter = {};
+  if (query.from) {
+    dateFilter.gte = parseIsoDate(query.from);
+  }
+  if (query.to) {
+    dateFilter.lte = parseIsoDate(query.to);
   }
 
-  const goalId = resolveGoalIdParam(req, res);
-  if (!goalId) {
-    return;
+  const where: Prisma.ProgressEventWhereInput = {
+    goalId,
+  };
+  if (query.from || query.to) {
+    where.date = dateFilter;
   }
 
-  const goal = await resolveGoalForUser(goalId, user.id, goalProgressStatusSelect, res);
-  if (!goal) {
-    return;
-  }
+  try {
+    const events = await prisma.progressEvent.findMany({
+      where,
+      orderBy: {
+        date: query.sort,
+      },
+      select: progressEventSelect,
+    });
 
+    sendOkJson(res, {
+      items: events.map(mapProgressEventResponse),
+    });
+  } catch {
+    sendInternalError(res, 'Failed to list progress events');
+  }
+}
+
+async function createProgressEvent(
+  req: IncomingMessage,
+  res: ServerResponse,
+  goal: Prisma.GoalGetPayload<{ select: typeof goalProgressStatusSelect }>,
+  user: TelegramRequestUser
+): Promise<void> {
   const body = await readJsonBodyOrSendInvalidRequest(req, res);
   if (body === null) {
     return;
@@ -98,4 +124,33 @@ async function createProgressEvent(req: IncomingMessage, res: ServerResponse): P
   }
 }
 
-export default withBotServiceAuth(createProgressEvent);
+async function progressEndpoint(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    sendMethodNotAllowed(res, ['GET', 'POST']);
+    return;
+  }
+
+  const user = await resolveTelegramRequestUser(req, res);
+  if (!user) {
+    return;
+  }
+
+  const goalId = resolveGoalIdParam(req, res);
+  if (!goalId) {
+    return;
+  }
+
+  const goal = await resolveGoalForUser(goalId, user.id, goalProgressStatusSelect, res);
+  if (!goal) {
+    return;
+  }
+
+  if (req.method === 'GET') {
+    await sendProgressEventsList(req, res, goal.id);
+    return;
+  }
+
+  await createProgressEvent(req, res, goal, user);
+}
+
+export default withBotServiceAuth(progressEndpoint);
